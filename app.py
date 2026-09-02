@@ -12,10 +12,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-from flask import Flask, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file
 
 from services.assessment import LIMITATIONS_STATEMENT, assess_competition
-from services.osm import RADIUS_METERS, OsmLookupError, find_nearby_venues, geocode_address
+from services.osm import (
+    RADIUS_METERS,
+    OsmLookupError,
+    find_nearby_venues,
+    geocode_address,
+    suggest_addresses,
+)
 
 app = Flask(__name__)
 
@@ -64,6 +70,17 @@ def run_search(address: str, category: str) -> dict:
         "assessment_text": assessment_text,
         "limitations": LIMITATIONS_STATEMENT,
     }
+
+
+@app.route("/autocomplete")
+def autocomplete():
+    query = request.args.get("q", "").strip()
+    if len(query) < 3:
+        return jsonify([])
+    try:
+        return jsonify(suggest_addresses(query))
+    except Exception:
+        return jsonify([])
 
 
 @app.route("/")

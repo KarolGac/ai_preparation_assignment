@@ -11,16 +11,25 @@
     input, select { padding: 0.5rem; font-size: 1rem; }
     button { padding: 0.6rem; font-size: 1rem; cursor: pointer; }
     .error { color: #b00020; margin-top: 1rem; }
+    .address-field { position: relative; }
+    .suggestions {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+      background: #fff; border: 1px solid #ccc; border-top: none;
+      max-height: 220px; overflow-y: auto; list-style: none; margin: 0; padding: 0;
+    }
+    .suggestions li { padding: 0.5rem; cursor: pointer; font-size: 0.9rem; }
+    .suggestions li:hover, .suggestions li.active { background: #eef7ee; }
   </style>
 </head>
 <body>
   <h1>HORECA Competition Lens</h1>
   <p>Enter an address and pick a venue type to see nearby mapped competitors within 1 km.</p>
 
-  <form method="post" action="/search">
-    <div>
+  <form method="post" action="/search" autocomplete="off">
+    <div class="address-field">
       <label for="address">Address</label><br>
       <input type="text" id="address" name="address" placeholder="e.g. Spui 70, The Hague" value="{{ address or '' }}" required>
+      <ul class="suggestions" id="suggestions" hidden></ul>
     </div>
     <div>
       <label for="category">Category</label><br>
@@ -36,5 +45,57 @@
   {% if error %}
     <p class="error">{{ error }}</p>
   {% endif %}
+
+  <script>
+    const input = document.getElementById('address');
+    const list = document.getElementById('suggestions');
+    let debounceTimer;
+    let currentSuggestions = [];
+
+    function hideSuggestions() {
+      list.hidden = true;
+      list.innerHTML = '';
+      currentSuggestions = [];
+    }
+
+    function showSuggestions(items) {
+      currentSuggestions = items;
+      list.innerHTML = '';
+      if (!items.length) { hideSuggestions(); return; }
+      for (const text of items) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        list.appendChild(li);
+      }
+      list.hidden = false;
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const query = input.value.trim();
+      if (query.length < 3) { hideSuggestions(); return; }
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/autocomplete?q=${encodeURIComponent(query)}`);
+          const items = await res.json();
+          showSuggestions(items);
+        } catch (e) {
+          hideSuggestions();
+        }
+      }, 300);
+    });
+
+    list.addEventListener('click', (e) => {
+      if (e.target.tagName === 'LI') {
+        input.value = e.target.textContent;
+        hideSuggestions();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.target !== input) hideSuggestions();
+    });
+  </script>
 </body>
 </html>

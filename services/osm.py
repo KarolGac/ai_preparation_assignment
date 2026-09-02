@@ -22,10 +22,29 @@ RADIUS_METERS = 1000
 # hammer the public Nominatim/Overpass endpoints.
 _geocode_cache: dict[str, tuple[float, float]] = {}
 _overpass_cache: dict[tuple[float, float, str], list[dict]] = {}
+_suggest_cache: dict[str, list[str]] = {}
 
 
 class OsmLookupError(Exception):
     """Raised when geocoding or venue search fails."""
+
+
+def suggest_addresses(query: str, limit: int = 5) -> list[str]:
+    """Return candidate address strings from Nominatim for autocomplete."""
+    cache_key = query.strip().lower()
+    if not cache_key:
+        return []
+    if cache_key in _suggest_cache:
+        return _suggest_cache[cache_key]
+
+    params = {"q": query, "format": "json", "limit": limit}
+    response = requests.get(NOMINATIM_URL, params=params, headers=HEADERS, timeout=10)
+    response.raise_for_status()
+    results = response.json()
+
+    suggestions = [r["display_name"] for r in results]
+    _suggest_cache[cache_key] = suggestions
+    return suggestions
 
 
 def geocode_address(address: str) -> tuple[float, float]:
