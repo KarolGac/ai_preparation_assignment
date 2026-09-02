@@ -118,6 +118,12 @@ def report():
         result = run_search(address, category)
     except OsmLookupError as exc:
         return render_template("index.html", error=str(exc), address=address, category=category)
+    except Exception:
+        return render_template(
+            "index.html",
+            error="Something went wrong while searching OpenStreetMap (it may be temporarily unavailable). Please try again.",
+            address=address, category=category,
+        )
 
     REPORT_DATA_PATH.write_text(json.dumps(result, indent=2))
     REPORT_OUTPUT_DIR.mkdir(exist_ok=True)
