@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Results — HORECA Competition Lens</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 3rem auto; padding: 0 1rem; color: #1a1a1a; }
+    h1 { font-size: 1.4rem; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+    th { background: #f4f4f4; }
+    .meta { color: #555; font-size: 0.9rem; }
+    .note { background: #fff8e1; padding: 0.75rem; border-radius: 4px; margin-top: 1rem; font-size: 0.9rem; }
+    .assessment { background: #eef7ee; padding: 0.75rem; border-radius: 4px; margin-top: 1rem; font-size: 0.9rem; }
+    .actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
+    a.button, button { padding: 0.5rem 1rem; font-size: 0.9rem; text-decoration: none; border: 1px solid #333; border-radius: 4px; color: #1a1a1a; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Results for "{{ address }}"</h1>
+  <p class="meta">Category: {{ category }} &middot; Radius: {{ radius_m }} m &middot; Matching establishments found: {{ total_count }}</p>
+
+  {% if venues %}
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Website</th><th>Distance</th></tr>
+      </thead>
+      <tbody>
+        {% for v in venues %}
+        <tr>
+          <td>{{ v.name }}</td>
+          <td>{{ v.type }}</td>
+          <td>{% if v.website %}<a href="{{ v.website }}" target="_blank" rel="noopener">link</a>{% else %}—{% endif %}</td>
+          <td>{{ "%.0f"|format(v.distance_m) }} m</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if total_count < 5 %}
+      <p class="note">Only {{ total_count }} matching establishment(s) found within {{ radius_m }} m — showing all available results.</p>
+    {% endif %}
+  {% else %}
+    <p class="note">No matching establishments found within {{ radius_m }} m.</p>
+  {% endif %}
+
+  <div class="assessment">{{ assessment_text }}</div>
+
+  {% if error %}
+    <p class="note">{{ error }}</p>
+  {% endif %}
+
+  <div class="actions">
+    <a class="button" href="/">New search</a>
+    <form method="post" action="/report">
+      <input type="hidden" name="address" value="{{ address }}">
+      <input type="hidden" name="category" value="{{ category }}">
+      <button type="submit">Generate PDF report</button>
+    </form>
+  </div>
+</body>
+</html>

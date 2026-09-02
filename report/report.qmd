@@ -1,0 +1,59 @@
+---
+title: "HORECA Competition Analysis"
+format:
+  pdf:
+    toc: false
+---
+
+```{python}
+#| echo: false
+import json
+from pathlib import Path
+
+data = json.loads(Path("report_data.json").read_text())
+```
+
+## Search parameters
+
+- **Address:** `{python} data["address"]`
+- **Category:** `{python} data["category"]`
+- **Search radius:** `{python} data["radius_m"]` metres
+
+## Closest matching establishments
+
+```{python}
+#| echo: false
+import pandas as pd
+from IPython.display import Markdown
+
+venues = data["venues"]
+if venues:
+    df = pd.DataFrame(venues)[["name", "type", "website", "distance_m"]]
+    df.columns = ["Name", "Type", "Website", "Distance (m)"]
+    df["Distance (m)"] = df["Distance (m)"].round(0).astype(int)
+    df["Website"] = df["Website"].fillna("—")
+    display(Markdown(df.to_markdown(index=False)))
+else:
+    display(Markdown("*No matching establishments were found within the search radius.*"))
+```
+
+```{python}
+#| echo: false
+#| output: asis
+total = data["total_count"]
+if total < 5:
+    print(f"\n> Only {total} matching establishment(s) were found within the search radius — all available results are shown above.\n")
+```
+
+## Summary statistics
+
+- **Total matching mapped establishments within radius:** `{python} data["total_count"]`
+- **Distance to closest matching establishment:** `{python} f'{data["closest_distance_m"]:.0f} m' if data["closest_distance_m"] is not None else "N/A"`
+
+## Indicative competition assessment
+
+`{python} data["assessment_text"]`
+
+## Limitations
+
+`{python} data["limitations"]`

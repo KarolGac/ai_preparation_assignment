@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.env
+report/output/
+*.pdf
+!assignment_aitaskforce_week0.pdf
+.quarto/
