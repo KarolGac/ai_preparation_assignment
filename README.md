@@ -47,32 +47,23 @@ transparent, rule-based competition assessment.
 ## Reflection
 
 **What worked well?**
-The core pipeline — geocode an address, query Overpass for nearby venues, compute
-distances, and render a rule-based assessment — worked correctly on the first
-implementation pass. Both edge cases (many competitors and zero competitors) produced
-sensible output without extra fixes.
+The main flow (address to Overpass search to distances to rule-based assessment) worked
+on the first try. Both edge cases I tested (lots of competitors, zero competitors) gave
+sensible results without needing fixes.
 
 **What did not work at first?**
-Generating the Quarto PDF failed twice before it worked:
-1. Quarto defaulted to a different, globally-installed Python interpreter that didn't
-   have the project's dependencies (pandas, jupyter), causing a `ModuleNotFoundError`.
-2. Once that was fixed, Quarto still couldn't find a TeX engine to produce the PDF —
-   TinyTeX wasn't installed yet.
-3. Separately, a Flask session's PATH didn't pick up the newly-installed `quarto`
-   command, so the app itself couldn't find the executable even though it worked from
-   a fresh terminal.
+Generating the PDF failed a few times before it worked:
+1. Quarto ran the wrong Python (not the project's), so it was missing pandas/jupyter.
+2. Quarto also couldn't find a TeX engine yet, since TinyTeX wasn't installed.
+3. Even after installing Quarto, my terminal session didn't see it on PATH right away.
 
 **What is one issue you solved by iterating with your coding harness?**
-The Python-mismatch issue above: the fix was to explicitly set the `QUARTO_PYTHON`
-environment variable to the project's own interpreter (`sys.executable`) whenever the
-Flask app invokes `quarto render`, instead of relying on whatever Python happens to be
-first on the system PATH. I also found that failures were silently invisible in the UI
-because the results template never actually rendered the `error` value it was being
-passed — fixed by adding the missing block to the template.
+Fixed the Python mismatch by explicitly pointing Quarto to the project's own Python
+whenever it renders the report, instead of whatever Python happened to be found first.
+I also noticed error messages weren't showing up in the UI at all, the template was
+just missing the line that displays them, so I added it.
 
 **What is one thing you still do not understand or want to discuss during the workshop?**
-One search (a central address in The Hague) returned around 300 matching restaurants
-within a 1 km radius, which seems high. I'd like to discuss whether that's plausible for
-a dense OSM-mapped city center, or whether it points to a query issue (e.g. Overpass
-`around` matching more loosely than expected, or double-counting nodes vs. ways for the
-same venue).
+One search near central The Hague returned around 300 matching restaurants within 1 km.
+That feels high, I'd like to discuss whether that's realistic for a dense city center or
+a sign of something off in the Overpass query.
